@@ -1,6 +1,7 @@
 # UDP2Serial-Brigde
 
 UDP2Serial-Brigde tested on a Wemos D1 mini 21.01.2021
+designed by Lechnerch
 
 desigined for transmitting UDP-commands to a AGopenGPS Autosteer - Steering Wheel by Keya Electron http://www.dcmotorkeya.com/automatic-steering-motor-for-agricultural-machinery-auto-driving-system.html
 
