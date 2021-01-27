@@ -40,10 +40,11 @@ void setup() {
   Serial.begin(115200);
   WiFi.hostname("WemosD1mini_SteeringWheel");
   ArduinoOTA.setHostname("WemosD1mini_SteeringWheel_OTA");
-//  ArduinoOTA.setPassword("123");
+  ArduinoOTA.setPassword("123");
+  ArduinoOTA.setPort(65280);
   wificonnect();
   Udp.begin(UDPLocalPort);
-/*
+
   ArduinoOTA.onStart([]() {
     String type;
     if (ArduinoOTA.getCommand() == U_FLASH) {
@@ -100,7 +101,7 @@ void setup() {
       Udp.endPacket();
     }
   });
-  */
+  
   ArduinoOTA.begin();
 }
 
@@ -148,7 +149,7 @@ void loop() {
   }
 
 // Get data from mySerial and send it to wifi-UDP
-/*
+
   if (mySerial.available() > 0) {
     mySerial.readBytes(UDPSendPacketBuffer, sizeof(UDPSendPacketBuffer));
     mySerial.flush();
@@ -158,5 +159,5 @@ void loop() {
       UDPSendPacketBuffer[i] = 0;
     }
     Udp.endPacket();
-  }*/
+  }
 }
