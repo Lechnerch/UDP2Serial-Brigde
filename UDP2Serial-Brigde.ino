@@ -3,16 +3,21 @@
 // For converting the signal a RS232MAX-converter is needed too.
 // It schould also work with any other kind of commands
 // NO GUARANTEE, NO WARRANTY!!!! Improvements are welcome!
-
+// Python Release 2.7.17 https://www.python.org/downloads/release/python-2717/
 
 #include <ESP8266WiFi.h>
+// #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <SoftwareSerial.h>
+#include <ArduinoOTA.h>
 
 #ifndef STASSID
 #define STASSID "SSID"        // set SSID
 #define STAPSK  "PASSWORD"    // set PASSWORD
 #endif
+
+const char* ssid = STASSID;
+const char* password = STAPSK;
 
 unsigned int UDPLocalPort = 8877;       // local port the Wemos D1 mini listens on
 unsigned int UDPRemotePort = 8866;      // port UDP-packets are sent to
@@ -33,8 +38,70 @@ SoftwareSerial mySerial(2, 0); // RX, TX  // On Wemos D1 mini RX(2) means Pin D4
 void setup() {
   mySerial.begin(115200);
   Serial.begin(115200);
+  WiFi.hostname("WemosD1mini_SteeringWheel");
+  ArduinoOTA.setHostname("WemosD1mini_SteeringWheel_OTA");
+//  ArduinoOTA.setPassword("123");
   wificonnect();
   Udp.begin(UDPLocalPort);
+/*
+  ArduinoOTA.onStart([]() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH) {
+      type = "sketch";
+    } else { // U_FS
+      type = "filesystem";
+    }
+
+    // NOTE: if updating FS this would be the place to unmount FS using FS.end()
+    Serial.println("Start updating " + type);
+    Udp.beginPacket(IPRecipient, UDPRemotePort);
+    Udp.println("Start updating: " + type );
+    Udp.endPacket();
+
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+    Udp.beginPacket(IPRecipient, UDPRemotePort);
+    Udp.println("End");
+    Udp.endPacket();
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    Udp.beginPacket(IPRecipient, UDPRemotePort);
+    Udp.println((progress / (total / 100)));
+    Udp.endPacket();
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) {
+      Serial.println("Auth Failed");
+      Udp.beginPacket(IPRecipient, UDPRemotePort);
+      Udp.println("Auth failed");
+      Udp.endPacket();
+    } else if (error == OTA_BEGIN_ERROR) {
+      Serial.println("Begin Failed");
+      Udp.beginPacket(IPRecipient, UDPRemotePort);
+      Udp.println("Begin failed");
+      Udp.endPacket();
+    } else if (error == OTA_CONNECT_ERROR) {
+      Serial.println("Connect Failed");
+      Udp.beginPacket(IPRecipient, UDPRemotePort);
+      Udp.println("Connect Failed");
+      Udp.endPacket();
+    } else if (error == OTA_RECEIVE_ERROR) {
+      Serial.println("Receive Failed");
+      Udp.beginPacket(IPRecipient, UDPRemotePort);
+      Udp.println("Receive Failed");
+      Udp.endPacket();
+    } else if (error == OTA_END_ERROR) {
+      Serial.println("End Failed");
+      Udp.beginPacket(IPRecipient, UDPRemotePort);
+      Udp.println("End failed");
+      Udp.endPacket();
+    }
+  });
+  */
+  ArduinoOTA.begin();
 }
 
 void wificonnect() {
@@ -59,6 +126,10 @@ void wificonnect() {
 
 
 void loop() {
+  if (WiFi.status() == WL_CONNECTED) {
+    ArduinoOTA.handle(); // OTA handle, DONT REMOVE
+  }
+  
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Reconnecting");
     wificonnect();
@@ -77,7 +148,7 @@ void loop() {
   }
 
 // Get data from mySerial and send it to wifi-UDP
-
+/*
   if (mySerial.available() > 0) {
     mySerial.readBytes(UDPSendPacketBuffer, sizeof(UDPSendPacketBuffer));
     mySerial.flush();
@@ -87,5 +158,5 @@ void loop() {
       UDPSendPacketBuffer[i] = 0;
     }
     Udp.endPacket();
-  }
+  }*/
 }
