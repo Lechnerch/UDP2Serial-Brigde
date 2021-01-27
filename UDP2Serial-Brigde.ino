@@ -3,13 +3,14 @@
 // For converting the signal a RS232MAX-converter is needed too.
 // It schould also work with any other kind of commands
 // NO GUARANTEE, NO WARRANTY!!!! Improvements are welcome!
-// Python Release 2.7.17 https://www.python.org/downloads/release/python-2717/
+// AsyncElegantOTA Copyright (c) 2019 Ayush Sharma  https://github.com/ayushsharma82/AsyncElegantOTA
 
 #include <ESP8266WiFi.h>
-// #include <ESP8266mDNS.h>
 #include <WiFiUdp.h>
 #include <SoftwareSerial.h>
-#include <ArduinoOTA.h>
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <AsyncElegantOTA.h> // AsyncElegantOTA Copyright (c) 2019 Ayush Sharma  https://github.com/ayushsharma82/AsyncElegantOTA
 
 #ifndef STASSID
 #define STASSID "SSID"        // set SSID
@@ -33,80 +34,26 @@ int i = 1;
 
 WiFiUDP Udp;
 SoftwareSerial mySerial(2, 0); // RX, TX  // On Wemos D1 mini RX(2) means Pin D4, TX(0) means Pin D3 // Have a look at https://arduino-projekte.info/wp-content/uploads/2017/03/wemos_d1_mini_pinout.png
-
+AsyncWebServer server(80);
 
 void setup() {
   mySerial.begin(115200);
   Serial.begin(115200);
   WiFi.hostname("WemosD1mini_SteeringWheel");
-  ArduinoOTA.setHostname("WemosD1mini_SteeringWheel_OTA");
-  ArduinoOTA.setPassword("123");
-  ArduinoOTA.setPort(65280);
   wificonnect();
   Udp.begin(UDPLocalPort);
 
-  ArduinoOTA.onStart([]() {
-    String type;
-    if (ArduinoOTA.getCommand() == U_FLASH) {
-      type = "sketch";
-    } else { // U_FS
-      type = "filesystem";
-    }
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+  request->send(200, "text/html", "Got to <a href='../update'>192.168.1.72/update</a>");
+  });
 
-    // NOTE: if updating FS this would be the place to unmount FS using FS.end()
-    Serial.println("Start updating " + type);
-    Udp.beginPacket(IPRecipient, UDPRemotePort);
-    Udp.println("Start updating: " + type );
-    Udp.endPacket();
+  AsyncElegantOTA.begin(&server);    // Start ElegantOTA
+  server.begin();
+  Serial.println("HTTP server started");
 
-  });
-  ArduinoOTA.onEnd([]() {
-    Serial.println("\nEnd");
-    Udp.beginPacket(IPRecipient, UDPRemotePort);
-    Udp.println("End");
-    Udp.endPacket();
-  });
-  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    Udp.beginPacket(IPRecipient, UDPRemotePort);
-    Udp.println((progress / (total / 100)));
-    Udp.endPacket();
-  });
-  ArduinoOTA.onError([](ota_error_t error) {
-    Serial.printf("Error[%u]: ", error);
-    if (error == OTA_AUTH_ERROR) {
-      Serial.println("Auth Failed");
-      Udp.beginPacket(IPRecipient, UDPRemotePort);
-      Udp.println("Auth failed");
-      Udp.endPacket();
-    } else if (error == OTA_BEGIN_ERROR) {
-      Serial.println("Begin Failed");
-      Udp.beginPacket(IPRecipient, UDPRemotePort);
-      Udp.println("Begin failed");
-      Udp.endPacket();
-    } else if (error == OTA_CONNECT_ERROR) {
-      Serial.println("Connect Failed");
-      Udp.beginPacket(IPRecipient, UDPRemotePort);
-      Udp.println("Connect Failed");
-      Udp.endPacket();
-    } else if (error == OTA_RECEIVE_ERROR) {
-      Serial.println("Receive Failed");
-      Udp.beginPacket(IPRecipient, UDPRemotePort);
-      Udp.println("Receive Failed");
-      Udp.endPacket();
-    } else if (error == OTA_END_ERROR) {
-      Serial.println("End Failed");
-      Udp.beginPacket(IPRecipient, UDPRemotePort);
-      Udp.println("End failed");
-      Udp.endPacket();
-    }
-  });
-  
-  ArduinoOTA.begin();
 }
 
 void wificonnect() {
-
   WiFi.mode(WIFI_STA);
   WiFi.config(IPUdpToSerial, IPgateway, IPsubnet);
   WiFi.begin(STASSID, STAPSK);
@@ -127,9 +74,7 @@ void wificonnect() {
 
 
 void loop() {
-  if (WiFi.status() == WL_CONNECTED) {
-    ArduinoOTA.handle(); // OTA handle, DONT REMOVE
-  }
+  AsyncElegantOTA.loop();
   
   if (WiFi.status() != WL_CONNECTED) {
     Serial.println("Reconnecting");
@@ -149,7 +94,7 @@ void loop() {
   }
 
 // Get data from mySerial and send it to wifi-UDP
-
+/*
   if (mySerial.available() > 0) {
     mySerial.readBytes(UDPSendPacketBuffer, sizeof(UDPSendPacketBuffer));
     mySerial.flush();
@@ -159,5 +104,5 @@ void loop() {
       UDPSendPacketBuffer[i] = 0;
     }
     Udp.endPacket();
-  }
+  }*/
 }
